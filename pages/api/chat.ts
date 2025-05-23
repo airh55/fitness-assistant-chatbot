@@ -1,26 +1,22 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import OpenAI from "openai";
+import { NextApiRequest, NextApiResponse } from 'next';
+import OpenAI from 'openai';
 
 const openai = new OpenAI();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { messages } = req.body;
-
-  if (!messages) {
-    return res.status(400).json({ error: "No messages provided" });
-  }
+  if (req.method !== 'POST') return res.status(405).end();
 
   try {
+    const { messages } = req.body;
+
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: 'gpt-4o-mini',
       messages,
     });
 
-    const answer = completion.choices[0].message?.content;
-
-    res.status(200).json({ answer });
+    res.status(200).json({ answer: completion.choices[0].message?.content });
   } catch (error) {
-    console.error("OpenAI API error:", error);
-    res.status(500).json({ error: "Failed to generate response" });
+    console.error(error);
+    res.status(500).json({ error: 'Error with OpenAI request' });
   }
 }
