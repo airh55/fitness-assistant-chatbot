@@ -1,3 +1,4 @@
+// pages/api/chat.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 
@@ -6,15 +7,19 @@ const openai = new OpenAI({
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
   const { prompt } = req.body;
 
-  if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
+  if (!prompt || typeof prompt !== 'string') {
+    return res.status(400).json({ error: 'Prompt is required and must be a string' });
+  }
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o-mini', // Make sure you have access or change to a valid model
       messages: [
         {
           role: 'system',
@@ -29,8 +34,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ],
     });
 
-    res.status(200).json({ text: completion.choices[0].message.content });
+    return res.status(200).json({ text: completion.choices[0].message.content });
   } catch (error) {
-    res.status(500).json({ error: 'OpenAI API error' });
+    console.error('OpenAI API error:', error);
+    return res.status(500).json({ error: 'OpenAI API error' });
   }
 }
